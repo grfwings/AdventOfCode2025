@@ -59,42 +59,36 @@ fn main() {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Dial {
-    val: u32,
-    modulus: u32,
+    val: i32,
+    size: i32,
 }
 
 impl Dial {
-    fn new(val: u32, modulus: u32) -> Self {
+    fn new(val: i32, size: i32) -> Self {
         Self {
-            val: val % modulus,
-            modulus,
+            val,
+            size,
         }
     }
 
-    fn add(&mut self, n: u32) {
-        self.val = ( self.val + n) % self.modulus;
-    }
-
-    fn sub(&mut self, n: u32) {
-        let n = n % self.modulus;
-        self.val = ( self.val + self.modulus - n ) % self.modulus;
+    fn rotate(&mut self, n: i32) {
+        self.val = ( self.val + n ).rem_euclid(self.size);
     }
 }
 
 fn solve_p1(input: &str) -> u32 {
     let mut dial = Dial::new(50, 100);
-
     let mut zeroes: u32 = 0;
 
     dbg_println!("The dial starts by pointing at 50");
 
     for line in input.lines() { 
         let dir: &str = &line[..1];
-        let num: u32 = line[1..].parse().unwrap();
+        let num: i32 = line[1..].parse().unwrap();
 
         match dir {
-            "R" => dial.add(num),
-            "L" => dial.sub(num),
+            "R" => dial.rotate(num),
+            "L" => dial.rotate(-num),
             _ => panic!("Bad value for direction"),
         };
 
@@ -108,51 +102,30 @@ fn solve_p1(input: &str) -> u32 {
     zeroes
 }
 
-fn solve_p2(input: &str) -> u32 {
-    let mut dial = Dial::new(50, 100);
+fn solve_p2(input: &str) -> i32 {
 
-    let mut clicks = 0;
+    let mut pos: i32 = 50;
+    let size: i32 = 100;
+    let mut clicks: i32 = 0;
 
     for line in input.lines() {
         let dir: &str = &line[..1];
-        let num: u32 = line[1..].parse().unwrap();
+        let num: i32 = line[1..].parse().unwrap();
+        let old_pos = pos;
+        let rotation = if dir == "R" { pos + num } else {  pos - num };
 
-        match dir {
-            "R" => {
-                let sav = dial.val;
-                dial.add(num);
-                if sav == 0 && num > 0 {
-                    // Starting from 0, count complete rotations
-                    clicks += num / dial.modulus;
-                } else if num > dial.modulus - sav {
-                    let rem = num - (dial.modulus - sav);
-                    clicks += 1 + rem / dial.modulus;
-                } else if dial.val == 0 && sav != 0 {
-                    clicks += 1;
-                }
-            },
-            "L" => {
-                let sav = dial.val;
-                dial.sub(num);
+        clicks += rotation.abs() / size;
 
-                if sav == 0 && num > 0 {
-                    // Starting from 0, count complete rotations
-                    clicks += num / dial.modulus;
-                } else {
-                    if num > sav {
-                        let rem = num - sav;
-                        clicks +=  1 + (rem - 1) / dial.modulus;
-                    } else if dial.val == 0 && sav != 0 {
-                    clicks += 1;
-                    }
-                }
-            },
-            _ => panic!("Bad value for direction"),
-        };
+        if rotation * old_pos <= 0 {
+            clicks += 1;
+        }
+        if old_pos == 0 {
+            clicks -= 1;
+        }
 
-        assert!(dial.val < dial.modulus, "Dial value {} out of range!", dial.val);
+        pos = rotation % size;
 
-        dbg_println!("The dial is rotated {} to point at {}. Clicks: {}", line, dial.val, clicks);
+        dbg_println!("The dial is rotated {} to point at {}. Clicks: {}", line, pos, clicks);
 
     }
 
