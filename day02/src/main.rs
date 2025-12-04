@@ -78,15 +78,6 @@ fn solve_p1(input: &str) -> i64 {
     invalid_id_sum
 }
 
-// For Part 2, must find numbers composed of sequences of repeating digits.
-// Can be represented as the geometric series
-// n = d * ( 10^[k*(m-1)] + 10^[k*(m-2)] + ... + 10^k + 1)
-// Where d is repeating digits, k is length, and m is # repetitions >= 2
-// So the factor f can be found with
-// f = (10^(k*m) - 1) / (10^k - 1)
-// this gives us n = f * d
-// ex. 12341234 = 1234 * 10001
-// so as long as n % f and n / f < 10^k, it is a repeating digit num
 fn solve_p2(input: &str) -> u64 {
     let mut invalid_id_sum = 0;
 
@@ -96,25 +87,48 @@ fn solve_p2(input: &str) -> u64 {
         let hi = last.trim().parse::<u64>().unwrap();
         for n in lo..=hi {
             dbg_println!("Testing n={}",n);
-            let digit_count = n.ilog10() + 1;
-
-            for k in 1..digit_count {
-                if digit_count % k != 0 {
-                    continue;
-                }
-                let m = digit_count / k;
-                let r = 10_u64.strict_pow(k);
-                let f = (r.strict_pow( m) - 1) / (r - 1);
-                
-                if n % f == 0 && n / f < r {
-                    dbg_println!("Found invlid ID {}", n);
-                    invalid_id_sum += n;
-                    break;
-                }
+            if is_invalid_math(&n) {
+                invalid_id_sum += n;
             }
 
         }
     }
 
     invalid_id_sum
+}
+
+// For Part 2, must find numbers composed of sequences of repeating digits.
+// Can be represented as the geometric series
+// n = d * ( 10^[k*(m-1)] + 10^[k*(m-2)] + ... + 10^k + 1)
+// Where d is repeating digits, k is length, and m is # repetitions >= 2
+// So the factor f can be found with
+// f = (10^(k*m) - 1) / (10^k - 1)
+// this gives us n = f * d
+// ex. 12341234 = 1234 * 10001
+// so as long as n % f and n / f < 10^k, it is a repeating digit num
+fn is_invalid_math(n: &u64) -> bool {
+    let digit_count = n.ilog10() + 1;
+
+    for k in 1..digit_count {
+        if digit_count % k != 0 {
+            continue;
+        }
+
+        let m = digit_count / k;
+        let r = 10_u64.pow(k);
+        let f = (r.pow(m) - 1) / (r - 1);
+
+        if n % f == 0 && n / f < r {
+            dbg_println!("Found invalid ID {}", n);
+            return true;
+        }
+    }
+
+    false
+}
+
+fn is_invalid_str(input: &u64) -> bool {
+    let str = input.to_string();
+    let doubled = format!("{}{}", str, str);
+    doubled[1..].find(&str).map_or(false, |i| i < str.len() -1)
 }
