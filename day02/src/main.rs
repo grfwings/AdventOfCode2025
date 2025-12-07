@@ -87,7 +87,7 @@ fn solve_p2(input: &str) -> u64 {
         let hi = last.trim().parse::<u64>().unwrap();
         for n in lo..=hi {
             dbg_println!("Testing n={}",n);
-            if is_invalid_math(&n) {
+            if is_invalid_math(n) {
                 invalid_id_sum += n;
             }
 
@@ -106,7 +106,7 @@ fn solve_p2(input: &str) -> u64 {
 // this gives us n = f * d
 // ex. 12341234 = 1234 * 10001
 // so as long as n % f and n / f < 10^k, it is a repeating digit num
-fn is_invalid_math(n: &u64) -> bool {
+fn is_invalid_math(n: u64) -> bool {
     let digit_count = n.ilog10() + 1;
 
     for k in 1..digit_count {
@@ -130,5 +130,5 @@ fn is_invalid_math(n: &u64) -> bool {
 fn is_invalid_str(input: &u64) -> bool {
     let str = input.to_string();
     let doubled = format!("{}{}", str, str);
-    doubled[1..].find(&str).map_or(false, |i| i < str.len() -1)
+    doubled[1..].find(&str).is_some_and(|i| i < str.len() -1)
 }
